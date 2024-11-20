@@ -1,0 +1,38 @@
+// :root 选择器通常用于定义全局 CSS 变量（也称为自定义属性）,整个文档中被引用和使用，可以通过 var() 函数来引用这些变量
+:root {
+  // 主题色
+  --primary-color: #409eff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+  --info-color: #909399;
+
+  // 背景色
+  --bg-color: #ffffff;
+  --bg-color-secondary: #f5f7fa;
+  
+  // 文字颜色
+  --text-color-primary: #303133;
+  --text-color-regular: #606266;
+  --text-color-secondary: #909399;
+
+  // 边框颜色
+  --border-color: #dcdfe6;
+  
+  // 阴影
+  --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  
+  // 圆角
+  --border-radius: 4px;
+  --border-radius-large: 8px;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1a1a1a;
+  --bg-color-secondary: #242424;
+  --text-color-primary: #ffffff;
+  --text-color-regular: #e0e0e0;
+  --text-color-secondary: #909399;
+  --border-color: #4c4c4c;
+  --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
