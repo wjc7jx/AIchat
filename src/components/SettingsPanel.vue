@@ -1,12 +1,16 @@
 <template>
-  <el-drawer
+  <!-- 设置抽屉组件，用于展示和编辑应用设置 -->
+  <el-drawer 
+    style="background-color: var(--bg-color);"
     v-model="visible"
     title="设置"
     direction="rtl"
     size="400px"
   >
     <div class="settings-container">
+      <!-- 使用element-plus的表单组件来展示和编辑设置 -->
       <el-form :model="settings" label-width="120px">
+        <!-- 深色模式切换 -->
         <el-form-item label="深色模式">
           <el-switch
             v-model="settings.isDarkMode"
@@ -14,6 +18,7 @@
           />
         </el-form-item>
 
+        <!-- 模型选择 -->
         <el-form-item label="模型">
           <el-select v-model="settings.model" class="w-full">
             <el-option
@@ -25,6 +30,7 @@
           </el-select>
         </el-form-item>
 
+        <!-- Temperature设置 -->
         <el-form-item label="Temperature">
           <el-slider
             v-model="settings.temperature"
@@ -35,6 +41,7 @@
           />
         </el-form-item>
 
+        <!-- 最大Token设置 -->
         <el-form-item label="最大Token">
           <el-input-number
             v-model="settings.maxTokens"
@@ -44,6 +51,7 @@
           />
         </el-form-item>
 
+        <!-- API Key输入 -->
         <el-form-item label="API Key">
           <el-input
             v-model="settings.apiKey"
@@ -53,6 +61,7 @@
           />
         </el-form-item>
 
+        <!-- 流式响应切换 -->
         <el-form-item label="流式响应">
           <el-switch
             v-model="settings.streamResponse"
@@ -61,6 +70,7 @@
         </el-form-item>
       </el-form>
 
+      <!-- 保存设置按钮 -->
       <div class="settings-footer">
         <el-button type="primary" @click="handleSave">保存设置</el-button>
       </div>
@@ -73,25 +83,31 @@ import { ref, reactive, computed } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { ElMessage } from 'element-plus'
 
+// 定义组件的props
 const props = defineProps({
   modelValue: Boolean
 })
 
+// 定义组件的emits
 const emit = defineEmits(['update:modelValue'])
 
+// 使用设置存储
 const settingsStore = useSettingsStore()
 
+// 可见性计算属性，同步抽屉的可见性状态
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
+// 模型选项数组，用于下拉选择框
 const modelOptions = [
+  { label: 'GLM-4-Flash', value: 'glm-4-flash' },
   { label: 'GLM-4', value: 'glm-4' },
-  { label: 'GLM-4-FLASH', value: 'glm-4-flash' },
   { label: 'GLM-3-Turbo', value: 'glm-3-turbo' }
 ]
 
+// 设置对象，使用reactive进行响应式处理
 const settings = reactive({
   isDarkMode: settingsStore.isDarkMode,
   model: settingsStore.model,
@@ -101,10 +117,12 @@ const settings = reactive({
   streamResponse: settingsStore.streamResponse
 })
 
+// 处理深色模式切换
 const handleDarkModeChange = (value) => {
   settingsStore.toggleDarkMode()
 }
 
+// 保存设置
 const handleSave = () => {
   settingsStore.updateSettings(settings)
   ElMessage.success('设置已保存')
@@ -113,6 +131,8 @@ const handleSave = () => {
 </script>
 
 <style lang="scss" scoped>
+
+// 设置页面样式
 .settings-container {
   padding: 1rem;
   height: 100%;
@@ -120,19 +140,22 @@ const handleSave = () => {
   flex-direction: column;
 }
 
+// 保存按钮布局
 .settings-footer {
   margin-top: auto;
   padding-top: 1rem;
   text-align: right;
 }
 
+// 全宽样式，用于表单项
 .w-full {
   width: 100%;
 }
 
+// 表单项提示样式
 .form-item-tip {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
 }
-</style> 
+</style>
