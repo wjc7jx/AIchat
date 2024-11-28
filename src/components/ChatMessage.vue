@@ -16,26 +16,81 @@
     </div>
     <!-- 消息内容，根据加载状态显示不同内容 -->
     <div class="message-content">
-      <div class="message-text" v-if="!loading">
+      <!-- 显示模式 -->
+      <div class="message-text" v-if="!loading && !isEditing">
         <!-- 使用 v-html 渲染 Markdown 内容 -->
         <div class="markdown-body" v-html="renderedContent" ref="markdownBody" @click="handleCodeBlockClick"></div>
       </div>
-      <div class="message-loading" v-else>
+
+      <!-- 编辑模式 -->
+      <div class="message-edit" v-if="isEditing">
+        <el-input
+          v-model="editContent"
+          type="textarea"
+          :rows="2"
+          :autosize="{ minRows: 2, maxRows: 6 }"
+          ref="editInputRef"
+          @keydown.enter.exact.prevent="handleEditKeydown"
+          @keydown.esc="cancelEdit"
+        />
+        <div class="edit-actions">
+          <el-button size="small" @click="cancelEdit">取消</el-button>
+          <el-button type="primary" size="small" @click="saveEdit">保存</el-button>
+        </div>
+      </div>
+
+      <div class="message-loading" v-if="loading">
         <el-icon class="is-loading"><Loading /></el-icon>
         正在思考...
       </div>
-      <!-- 消息时间 -->
-      <div class="message-meta">
+
+      <!-- 消息底部区域：时间和操作按钮 -->
+      <div class="message-footer">
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+        <!-- 用户消息的操作按钮 -->
+        <div class="message-actions" v-if="!loading && message.role === 'user' && !isEditing">
+          <el-button-group>
+            <el-button type="text" size="small" @click="startEdit">
+              <el-icon><Edit /></el-icon>
+            </el-button>
+            <el-button type="text" size="small" @click="handleDelete">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
+        <!-- AI助手消息的操作按钮 -->
+        <div class="message-actions" v-if="!loading && message.role === 'assistant'">
+          <el-button-group>
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="handleRegenerate" 
+              :title="'重新生成'"
+              :disabled="isLoading"
+            >
+              <el-icon><RefreshRight /></el-icon>
+            </el-button>
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="handleCopyAll" 
+              :title="'复制全部'"
+            >
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { renderMarkdown } from '../utils/markdown'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Edit, Delete, RefreshRight, CopyDocument } from '@element-plus/icons-vue'
+import { useChatStore } from '../stores/chat'
 
 // 定义组件属性
 const props = defineProps({
@@ -49,7 +104,62 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['update', 'delete', 'regenerate'])
+
 const markdownBody = ref(null)
+const isEditing = ref(false)
+const editContent = ref('')
+const editInputRef = ref(null)
+
+// 从 store 中获取 loading 状态
+const chatStore = useChatStore()
+const isLoading = computed(() => chatStore.isLoading)
+
+// 开始编辑
+const startEdit = async () => {
+  editContent.value = props.message.content
+  isEditing.value = true
+  // 等待 DOM 更新后聚焦输入框
+  await nextTick()
+  editInputRef.value?.input?.focus()
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  isEditing.value = false
+  editContent.value = ''
+}
+
+// 保存编辑
+const saveEdit = () => {
+  if (!editContent.value.trim()) {
+    ElMessage.warning('消息内容不能为空')
+    return
+  }
+  emit('update', {
+    ...props.message,
+    content: editContent.value.trim()
+  })
+  isEditing.value = false
+}
+
+// 删除消息
+const handleDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这条消息吗？',
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    emit('delete', props.message)
+  } catch {
+    // 用户取消删除操作
+  }
+}
 
 // 格式化时间函数
 const formatTime = (timestamp) => {
@@ -80,6 +190,29 @@ const handleCodeBlockClick = (event) => {
     if (codeElement) {
       copyToClipboard(codeElement.textContent)
     }
+  }
+}
+
+// 处理编辑时的按键事件
+const handleEditKeydown = (e) => {
+  if (e.shiftKey) return // 如果按住 Shift，允许换行
+  saveEdit() // 直接保存并发送
+}
+
+// 处理重新生成
+const handleRegenerate = () => {
+  console.log('重新生成')
+  emit('regenerate', props.message)
+}
+
+// 复制全部内容
+const handleCopyAll = async () => {
+  try {
+    await navigator.clipboard.writeText(props.message.content)
+    ElMessage.success('内容已复制到剪贴板')
+  } catch (err) {
+    console.error('复制失败:', err)
+    ElMessage.error('复制失败')
   }
 }
 </script>
@@ -227,7 +360,7 @@ const handleCodeBlockClick = (event) => {
 .message-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   max-width: 80%;
 }
 
@@ -253,5 +386,70 @@ const handleCodeBlockClick = (event) => {
 .message-meta {
   font-size: 0.8rem;
   color: var(--text-color-secondary);
+}
+
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+}
+
+.message-time {
+  margin-right: 0.5rem;
+}
+
+.message-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  .el-button {
+    padding: 2px 4px;
+    height: 20px;
+    
+    .el-icon {
+      font-size: 14px;
+    }
+    
+    &:hover {
+      color: var(--primary-color);
+      background-color: var(--bg-color-secondary);
+    }
+  }
+}
+
+.message-edit {
+  background-color: var(--bg-color);
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+
+  .el-input {
+    margin-bottom: 0.5rem;
+    
+    :deep(.el-textarea__inner) {
+      background-color: var(--bg-color-secondary);
+      border-color: var(--border-color);
+      resize: none; // 禁用手动调整大小
+      
+      &:focus {
+        border-color: var(--primary-color);
+      }
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
 }
 </style>

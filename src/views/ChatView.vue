@@ -11,7 +11,7 @@
         <div class="messages-container" ref="messagesContainer">
             <template v-if="messages.length">
                 <chat-message v-for="message in messages" :key="message.id" :message="message"
-                    :loading="message.loading" />
+                    :loading="message.loading" @update="handleMessageUpdate" @delete="handleMessageDelete" @regenerate="handleRegenerate" />
             </template>
             <div v-else class="empty-state">
                 <el-empty description="开始对话吧" />
@@ -62,8 +62,9 @@ watch(messages, () => {
  * @param {string} content 用户输入的消息内容
  */
 const handleSend = async (content) => {
-    if (isLoading.value) return
+    console.log('发送消息',content)
 
+    // if (isLoading.value) return
     // 添加用户消息和助理的空消息
     chatStore.addMessage(messageHandler.formatMessage('user', content))
     chatStore.addMessage(messageHandler.formatMessage('assistant', ''))
@@ -108,6 +109,57 @@ const handleSend = async (content) => {
  */
 const handleClear = () => {
     chatStore.clearMessages()
+}
+
+// 处理消息更新
+const handleMessageUpdate = async (updatedMessage) => {
+
+    const index = chatStore.messages.findIndex(m => m.id === updatedMessage.id)
+    if (index !== -1) {
+        // 删除当前消息及其后的助手回复
+        chatStore.messages.splice(index, 2)
+        // 重新发送更新后的消息
+        await handleSend(updatedMessage.content)
+    }
+}
+
+// 处理消息删除
+const handleMessageDelete = (message) => {
+    const index = chatStore.messages.findIndex(m => m.id === message.id)
+    if (index !== -1) {
+        // 删除该消息及其后的助手回复
+        chatStore.messages.splice(index, 2)
+    }
+}
+
+// 处理重新生成
+const handleRegenerate = async (message) => {
+    console.log(message)
+    console.log(chatStore.messages)
+
+    const index = chatStore.messages.findIndex(m => m.id === message.id&&m.role==="assistant")
+    console.log(index)
+    if (index !== -1 && index > 0) {
+        // 获取上一条用户消息
+        const userMessage = chatStore.messages[index - 1]
+        // 删除当前的AI回复,但是删了后再发送的时候，userMessage不会指向当前这个
+        chatStore.messages.splice(index-1, 2)
+        // 重新发送请求前应该检查 isLoading 状态
+        if (isLoading.value) return
+        
+        chatStore.isLoading = true
+        try {
+            console.log(userMessage.content)
+            // 重新发送请求
+            await handleSend(userMessage.content)
+        } catch (error) {
+            console.error('重新生成失败:', error)
+            // 恢复原来的消息
+            chatStore.messages.splice(index, 0, message)
+        } finally {
+            chatStore.isLoading = false
+        }
+    }
 }
 </script>
 
