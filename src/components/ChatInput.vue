@@ -7,11 +7,14 @@
       <el-input
         v-model="messageText"
         type="textarea"
-        :rows="3"
+        :rows="1"
+        :autosize="{ minRows: 2, maxRows: 5 }"
         :placeholder="placeholder"
         resize="none"
         @keydown.enter.exact.prevent="handleSend"
         @keydown.enter.shift.exact="newline"
+        @input="adjustHeight"
+        ref="inputRef"
       />
       <!-- 按钮组 -->
       <div class="button-group">
@@ -45,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
 import { ElMessageBox } from 'element-plus'
@@ -108,6 +111,24 @@ const handleClear = async () => {
     // 如果用户取消操作，则不做任何事情
   }
 }
+
+const inputRef = ref(null)
+
+// 调整输入框高度的方法
+const adjustHeight = () => {
+  if (inputRef.value) {
+    const textarea = inputRef.value.$el.querySelector('textarea')
+    if (textarea) {
+      textarea.style.height = 'auto'
+      // textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }
+}
+
+// 在组件挂载后初始化
+onMounted(() => {
+  adjustHeight()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -126,6 +147,13 @@ const handleClear = async () => {
   
   .el-input {
     flex: 1;
+    
+    :deep(.el-textarea__inner) {
+      transition: all 0.3s;
+      line-height: 1.5;
+      padding: 8px 12px;
+      overflow-y: auto;
+    }
   }
 }
 
