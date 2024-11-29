@@ -3,7 +3,43 @@
   <div class="chat-input-container">
     <!-- 输入框和按钮的组合 -->
     <div class="input-wrapper">
-      <!-- 使用Element Plus的输入框组件，设置为多行文本域 -->
+      <!-- 添加文件上传区域 -->
+      <div class="upload-area" v-if="showUpload">
+        <el-upload
+          class="upload-component"
+          :action="null"
+          :auto-upload="false"
+          :on-change="handleFileChange"
+          :show-file-list="false"
+          multiple
+        >
+          <template #trigger>
+            <el-button type="primary" :icon="Plus">添加文件</el-button>
+          </template>
+        </el-upload>
+        
+        <!-- 预览区域 -->
+        <div class="preview-list" v-if="selectedFiles.length">
+          <div v-for="(file, index) in selectedFiles" :key="index" class="preview-item">
+            <!-- 图片预览 -->
+            <img v-if="isImage(file)" :src="getPreviewUrl(file)" class="preview-image"/>
+            <!-- 文件名预览 -->
+            <div v-else class="file-preview">
+              <el-icon><Document /></el-icon>
+              <span>{{ file.name }}</span>
+            </div>
+            <!-- 删除按钮 -->
+            <el-button 
+              class="delete-btn" 
+              type="danger" 
+              :icon="Delete" 
+              circle
+              @click="removeFile(index)"
+            />
+          </div>
+        </div>
+      </div>
+
       <el-input
         v-model="messageText"
         type="textarea"
@@ -16,9 +52,17 @@
         @input="adjustHeight"
         ref="inputRef"
       />
-      <!-- 按钮组 -->
+      
       <div class="button-group">
-        <!-- 清空对话的按钮，使用Element Plus的工具提示和按钮组件 -->
+        <!-- 添加切换上传区域的按钮 -->
+        <el-tooltip content="上传文件" placement="top">
+          <el-button
+            circle
+            :icon="Upload"
+            @click="toggleUpload"
+          />
+        </el-tooltip>
+        
         <el-tooltip content="清空对话" placement="top">
           <el-button
             circle
@@ -27,7 +71,7 @@
             @click="handleClear"
           />
         </el-tooltip>
-        <!-- 发送按钮，使用Element Plus的按钮组件 -->
+        
         <el-button
           type="primary"
           :loading="loading"
@@ -49,7 +93,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, Position, Upload, Plus, Document } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
 import { ElMessageBox } from 'element-plus'
 
@@ -76,14 +120,88 @@ Shift + Enter 换行`
 // 计算属性，用于获取聊天存储中的Token计数
 const tokenCount = computed(() => chatStore.tokenCount)
 
-// 处理发送消息的函数
-const handleSend = () => {
-  // 如果消息文本为空或正在加载，则不执行发送操作
-  if (!messageText.value.trim() || props.loading) return
+const showUpload = ref(false)
+const selectedFiles = ref([])
+
+// 切换上传区域显示
+const toggleUpload = () => {
+  showUpload.value = !showUpload.value
+}
+
+// 处理文件选择
+const handleFileChange = (file) => {
+  selectedFiles.value.push(file.raw)
+}
+
+// 移除文件
+const removeFile = (index) => {
+  selectedFiles.value.splice(index, 1)
+}
+
+// 判断是否为图片文件
+const isImage = (file) => {
+  return file.type.startsWith('image/')
+}
+
+// 获取预览URL
+const getPreviewUrl = (file) => {
+  return URL.createObjectURL(file)
+}
+
+// 修改发送处理函数
+const handleSend = async () => {
+  if ((!messageText.value.trim() && selectedFiles.value.length === 0) || props.loading) return
   
-  // 触发send事件，传递消息文本，并清空消息文本
-  emit('send', messageText.value)
-  messageText.value = ''//清除输入框输入文本
+  try {
+    // 处理文件上传
+    const fileContents = await Promise.all(
+      selectedFiles.value.map(async (file) => {
+        if (isImage(file)) {
+          return await convertImageToBase64(file)
+        } else {
+          return await readFileContent(file)
+        }
+      })
+    )
+
+    // 组合消息内容
+    let content = messageText.value
+    if (fileContents.length > 0) {
+      content = content + '\n' + fileContents.join('\n')
+    }
+
+    emit('send', content)
+    messageText.value = ''
+    selectedFiles.value = []
+    showUpload.value = false
+  } catch (error) {
+    console.error('发送失败:', error)
+    ElMessage.error('发送失败，请重试')
+  }
+}
+
+// 将图片转换为base64
+const convertImageToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      resolve(`![${file.name}](${e.target.result})`)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+// 读取文件内容
+const readFileContent = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      resolve(`\`\`\`\n${e.target.result}\n\`\`\``)
+    }
+    reader.onerror = reject
+    reader.readAsText(file)
+  })
 }
 
 // 处理换行的函数
@@ -169,5 +287,65 @@ onMounted(() => {
   font-size: 0.8rem;
   color: var(--text-color-secondary);
   text-align: right;
+}
+
+.upload-area {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  
+  .preview-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    
+    .preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      
+      .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--border-radius);
+      }
+      
+      .file-preview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-color-secondary);
+        border-radius: var(--border-radius);
+        
+        .el-icon {
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        span {
+          font-size: 0.8rem;
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          width: 90%;
+        }
+      }
+      
+      .delete-btn {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        padding: 0.25rem;
+        transform: scale(0.8);
+      }
+    }
+  }
 }
 </style>

@@ -326,7 +326,15 @@ const handleCopyAll = async () => {
 
       img {
         max-width: 100%;
-        height: auto;
+        max-height: 300px;
+        object-fit: contain;
+        margin: 0.5rem 0;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        
+        &:hover {
+          opacity: 0.9;
+        }
       }
 
       a {

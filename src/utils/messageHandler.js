@@ -1,9 +1,12 @@
 export const messageHandler = {
     formatMessage(role, content) {
+        const hasImage = content.includes('![') && content.includes('](data:image/')
+        
         return {
             id: Date.now(),
             role,
             content,
+            hasImage,
             loading: false,
         };
     },
