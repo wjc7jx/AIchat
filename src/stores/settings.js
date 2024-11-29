@@ -11,12 +11,16 @@ export const useSettingsStore = defineStore('settings', {
         temperature: 0.7,
         // 最大 token 数量，默认值为 1000
         maxTokens: 1000,
-        // 使用的模型名称，默认为 'glm-4-flash'
-        model: 'glm-4-flash',
+        // 使用的模型名称，默认为 'THUDM/glm-4-9b-chat'
+        model: 'THUDM/glm-4-9b-chat',
         // API 密钥，默认为空字符串
         apiKey: '',
         // 是否启用流式响应，默认为 true
         streamResponse: true,
+        // Top P 参数
+        topP: 0.7,
+        // Top K 参数
+        topK: 50,
     }),
 
     // 定义 store 的动作
@@ -50,3 +54,13 @@ export const useSettingsStore = defineStore('settings', {
         ],
     },
 })
+
+// 导出模型选项供其他组件使用
+export const modelOptions = [
+    { label: 'GLM-4-9B', value: 'THUDM/glm-4-9b-chat' },
+    { label: 'Qwen2.5-7B', value: 'Qwen/Qwen2.5-7B-Instruct' },
+    { label: 'Qwen2.5-Coder-7B', value: 'Qwen/Qwen2.5-Coder-7B-Instruct' },
+    { label: 'Meta-Llama-3.1-8B', value: 'meta-llama/Meta-Llama-3.1-8B-Instruct' },
+    // { label: 'Gemma-2-9B', value: 'google/gemma-2-9b-it' },  //不知道为什么用不了
+    { label: 'DeepSeek-V2.5', value: 'deepseek-ai/DeepSeek-V2.5' },
+]

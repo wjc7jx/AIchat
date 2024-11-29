@@ -68,6 +68,27 @@
           />
           <div class="form-item-tip">开启后将实时显示AI回复</div>
         </el-form-item>
+
+        <!-- Top P -->
+        <el-form-item label="Top P">
+          <el-slider
+            v-model="settings.topP"
+            :min="0"
+            :max="1"
+            :step="0.1"
+            show-input
+          />
+        </el-form-item>
+
+        <!-- Top K -->
+        <el-form-item label="Top K">
+          <el-input-number
+            v-model="settings.topK"
+            :min="1"
+            :max="100"
+            :step="1"
+          />
+        </el-form-item>
       </el-form>
 
       <!-- 保存设置按钮 -->
@@ -80,7 +101,7 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { useSettingsStore } from '../stores/settings'
+import { useSettingsStore, modelOptions } from '../stores/settings'
 import { ElMessage } from 'element-plus'
 
 // 定义组件的props
@@ -100,13 +121,6 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-// 模型选项数组，用于下拉选择框
-const modelOptions = [
-  { label: 'GLM-4-Flash', value: 'glm-4-flash' },
-  { label: 'GLM-4', value: 'glm-4' },
-  { label: 'GLM-3-Turbo', value: 'glm-3-turbo' }
-]
-
 // 设置对象，使用reactive进行响应式处理
 const settings = reactive({
   isDarkMode: settingsStore.isDarkMode,
@@ -114,7 +128,9 @@ const settings = reactive({
   temperature: settingsStore.temperature,
   maxTokens: settingsStore.maxTokens,
   apiKey: settingsStore.apiKey,
-  streamResponse: settingsStore.streamResponse
+  streamResponse: settingsStore.streamResponse,
+  topP: settingsStore.topP,
+  topK: settingsStore.topK
 })
 
 // 处理深色模式切换

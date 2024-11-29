@@ -1,6 +1,6 @@
 import { useSettingsStore } from '../stores/settings'
 
-const API_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4'
+const API_BASE_URL = 'https://api.siliconflow.cn/v1'
 
 const createHeaders = () => {
     const settingsStore = useSettingsStore()
@@ -19,14 +19,29 @@ export const chatApi = {
             messages,
             temperature: settingsStore.temperature,
             max_tokens: settingsStore.maxTokens,
-            stream
+            stream,
+            top_p: 0.7,
+            top_k: 50,
+            frequency_penalty: 0.5,
+            n: 1,
+            response_format: {
+                type: "text"
+            },
+            tools: [{
+                type: "function",
+                function: {
+                    description: "<string>",
+                    name: "<string>",
+                    parameters: {},
+                    strict: true
+                }
+            }]
         }
 
         const response = await fetch(`${API_BASE_URL}/chat/completions`, {
             method: 'POST',
             headers: {
                 ...createHeaders(),
-                // 如果是流式响应，添加相应的 Accept 头
                 ...(stream && { 'Accept': 'text/event-stream' })
             },
             body: JSON.stringify(payload)
@@ -36,12 +51,10 @@ export const chatApi = {
             throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        // 对于流式响应，直接返回 response 对象
         if (stream) {
             return response
         }
 
-        // 对于非流式响应，解析 JSON
         return await response.json()
     },
 
