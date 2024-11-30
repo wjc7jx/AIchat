@@ -260,6 +260,7 @@ const handleCopyAll = async () => {
       pre {
         position: relative;
         padding: 2rem 1rem 1rem;
+        overflow: auto;
         font-size: 85%;
         line-height: 1.45;
         background-color: var(--code-block-bg);
@@ -280,7 +281,6 @@ const handleCopyAll = async () => {
           justify-content: space-between;
           align-items: center;
           font-family: var(--code-font-family);
-          z-index: 1;
           
           .code-lang {
             font-size: 0.8rem;
@@ -313,8 +313,6 @@ const handleCopyAll = async () => {
           color: inherit;
           display: block;
           font-family: var(--code-font-family);
-          overflow-x: auto;
-          padding: 0 0.5rem;
         }
       }
 

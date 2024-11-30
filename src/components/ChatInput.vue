@@ -13,6 +13,7 @@
           :show-file-list="false"
           multiple
         >
+        <!-- trigger	触发文件选择框的内容 -->
           <template #trigger>
             <el-button type="primary" :icon="Plus">添加文件</el-button>
           </template>
@@ -236,7 +237,6 @@ const inputRef = ref(null)
 const adjustHeight = () => {
   if (inputRef.value) {
     // 获取输入框的DOM元素,因为是 ref，需要通过$el获取DOM元素
-    console.log(inputRef.value.$el)
     const textarea = inputRef.value.$el.querySelector('textarea')
     if (textarea) {
       textarea.style.height = 'auto'
