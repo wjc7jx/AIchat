@@ -1,6 +1,5 @@
 @use 'variables.scss';
 
-
 * {
   margin: 0;
   padding: 0;
@@ -34,4 +33,4 @@ body {
 .slide-fade-leave-to {
   transform: translateY(10px);
   opacity: 0;
-} 
+}

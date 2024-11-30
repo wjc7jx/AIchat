@@ -7,7 +7,9 @@ import 'element-plus/dist/index.css'
 import './assets/styles/main.scss'
 import router from './router'
 import App from './App.vue'
-import 'highlight.js/styles/github.css'
+
+// 使用深色代码主题
+import 'highlight.js/styles/github-dark.css'
 
 const app = createApp(App)
 const pinia = createPinia()

@@ -10,13 +10,20 @@ const md = new MarkdownIt({
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value}</code></pre>`
+        const highlighted = hljs.highlight(str, { 
+          language: lang, 
+          ignoreIllegals: true 
+        }).value
+        // 添加行号和语言标识
+        return `<pre class="hljs"><div class="code-header">
+          <span class="code-lang">${lang}</span>
+        </div><code class="${lang}">${highlighted}</code></pre>`
       } catch (__) {}
     }
     return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
   }
 })
-
+// 导出渲染函数
 export const renderMarkdown = (content) => {
   return md.render(content)
 }

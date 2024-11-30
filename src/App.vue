@@ -11,14 +11,19 @@
 </template>
 
 <script setup>
-import { ref,onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useSettingsStore } from './stores/settings'
 
 const settingsStore = useSettingsStore()
 const isDarkMode = ref(settingsStore.isDarkMode)
+
+// 监听主题变化
+watch(() => settingsStore.isDarkMode, async (newValue) => {
+  document.documentElement.setAttribute('data-theme', newValue ? 'dark' : 'light')
+}, { immediate: true })
+
 // 在组件挂载时初始化主题
 onMounted(() => {
-  // 根据存储的设置初始化主题
   document.documentElement.setAttribute('data-theme', settingsStore.isDarkMode ? 'dark' : 'light')
 })
 </script>

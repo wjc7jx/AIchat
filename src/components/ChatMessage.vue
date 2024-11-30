@@ -248,45 +248,62 @@ const handleCopyAll = async () => {
       }
 
       code {
+        font-family: var(--code-font-family);
         padding: 0.2em 0.4em;
         margin: 0;
         font-size: 85%;
-        background-color: var(--code-bg-light);
+        background-color: var(--code-bg);
         border-radius: 3px;
-        color: var(--code-text-light);
+        color: var(--code-text);
       }
 
       pre {
         position: relative;
-        padding: 0.75rem;
-        overflow: auto;
+        padding: 2rem 1rem 1rem;
         font-size: 85%;
         line-height: 1.45;
-        background-color: var(--code-block-bg-light);
+        background-color: var(--code-block-bg);
         border-radius: var(--border-radius);
-        margin: 0.25rem 0;
-        cursor: pointer;
+        margin: 0.5rem 0;
         border: 1px solid var(--border-color);
         
+        // 代码头部样式
+        .code-header {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          padding: 0.3rem 1rem;
+          background-color: var(--code-header-bg);
+          border-bottom: 1px solid var(--border-color);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-family: var(--code-font-family);
+          z-index: 1;
+          
+          .code-lang {
+            font-size: 0.8rem;
+            color: var(--text-color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+
         &::after {
           content: "点击复制";
           position: absolute;
-          top: 0.5rem;
-          right: 0.5rem;
+          top: 0.3rem;
+          right: 1rem;
           padding: 0.2rem 0.5rem;
           font-size: 0.75rem;
           color: var(--text-color-secondary);
-          background-color: var(--bg-color);
-          border-radius: var(--border-radius);
           opacity: 0;
           transition: opacity 0.3s;
+          font-family: system-ui, -apple-system, sans-serif;
         }
 
         &:hover::after {
-          opacity: 1;
-        }
-
-        &:active {
           opacity: 0.8;
         }
 
@@ -294,6 +311,10 @@ const handleCopyAll = async () => {
           padding: 0;
           background-color: transparent;
           color: inherit;
+          display: block;
+          font-family: var(--code-font-family);
+          overflow-x: auto;
+          padding: 0 0.5rem;
         }
       }
 

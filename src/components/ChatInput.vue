@@ -43,7 +43,7 @@
       <el-input
         v-model="messageText"
         type="textarea"
-        :rows="1"
+        :rows="2"
         :autosize="{ minRows: 2, maxRows: 5 }"
         :placeholder="placeholder"
         resize="none"
@@ -235,18 +235,16 @@ const inputRef = ref(null)
 // 调整输入框高度的方法
 const adjustHeight = () => {
   if (inputRef.value) {
+    // 获取输入框的DOM元素,因为是 ref，需要通过$el获取DOM元素
+    console.log(inputRef.value.$el)
     const textarea = inputRef.value.$el.querySelector('textarea')
     if (textarea) {
       textarea.style.height = 'auto'
-      // textarea.style.height = `${textarea.scrollHeight}px`
+      textarea.style.height = `${textarea.scrollHeight}px`
     }
   }
 }
 
-// 在组件挂载后初始化
-onMounted(() => {
-  adjustHeight()
-})
 </script>
 
 <style lang="scss" scoped>

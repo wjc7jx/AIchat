@@ -25,8 +25,15 @@
   // 圆角
   --border-radius: 4px;
   --border-radius-large: 8px;
+
+  // 代码相关的颜色和字体
+  --code-font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  --code-block-bg: #ffffff;
+  --code-header-bg: #f1f3f5;
+  --code-text: #476582;
+  --code-bg: rgba(27,31,35,0.05);
 }
-// 暗色主题
+
 [data-theme="dark"] {
   --bg-color: #1a1a1a;
   --bg-color-secondary: #242424;
@@ -35,4 +42,10 @@
   --text-color-secondary: #909399;
   --border-color: #4c4c4c;
   --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+
+  // 暗色模式下代码相关的颜色
+  --code-block-bg: #1e1e1e;
+  --code-header-bg: #2d2d2d;
+  --code-text: #d4d4d4;
+  --code-bg: rgba(255,255,255,0.1);
 }
