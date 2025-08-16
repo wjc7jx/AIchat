@@ -232,6 +232,25 @@ const handleCopyAll = async () => {
     .message-content {
       align-items: flex-end;
     }
+    
+    // 深色模式下用户消息的特殊样式
+    [data-theme="dark"] & {
+      .message-text {
+        background-color: var(--primary-color);
+        color: #ffffff;
+        box-shadow: var(--box-shadow), 0 0 8px rgba(92, 174, 253, 0.3);
+      }
+    }
+  }
+
+  // 助手消息深色模式优化
+  &.message-assistant {
+    [data-theme="dark"] & {
+      .message-text {
+        background-color: #2d2d2d;
+        box-shadow: var(--box-shadow), 0 0 4px rgba(255, 255, 255, 0.1);
+      }
+    }
   }
 
   .markdown-body {
@@ -397,6 +416,12 @@ const handleCopyAll = async () => {
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   white-space: pre-wrap;
+  transition: all 0.3s ease;
+  
+  // 深色模式下增强阴影效果
+  [data-theme="dark"] & {
+    border: 1px solid var(--border-color);
+  }
 }
 
 .message-loading {
@@ -441,6 +466,7 @@ const handleCopyAll = async () => {
   .el-button {
     padding: 2px 4px;
     height: 20px;
+    transition: all 0.2s ease;
     
     .el-icon {
       font-size: 14px;
@@ -448,7 +474,16 @@ const handleCopyAll = async () => {
     
     &:hover {
       color: var(--primary-color);
-      background-color: var(--bg-color-secondary);
+      background-color: var(--hover-bg-color);
+      transform: scale(1.05);
+    }
+    
+    // 深色模式下的按钮样式
+    [data-theme="dark"] & {
+      &:hover {
+        background-color: var(--active-bg-color);
+        box-shadow: 0 2px 4px rgba(92, 174, 253, 0.2);
+      }
     }
   }
 }

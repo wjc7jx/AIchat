@@ -23,4 +23,15 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
+
+// 挂载应用
 app.mount('#app')
+
+// Element Plus 主题适配
+import { useSettingsStore } from './stores/settings'
+
+// 在应用挂载后初始化主题系统
+app.config.globalProperties.$nextTick(() => {
+  const settingsStore = useSettingsStore()
+  settingsStore.initTheme()
+})

@@ -5,6 +5,8 @@ import { defineStore } from 'pinia'
 export const useSettingsStore = defineStore('settings', {
     // 定义 store 的状态
     state: () => ({
+        // 主题模式：'light', 'dark', 'system'
+        themeMode: 'system',
         // 是否启用深色模式，默认为 false
         isDarkMode: false,
         // 温度参数，控制生成文本的随机性，默认值为 0.7
@@ -25,11 +27,73 @@ export const useSettingsStore = defineStore('settings', {
 
     // 定义 store 的动作
     actions: {
-        // 切换深色模式
+        // 检测系统主题
+        detectSystemTheme() {
+            if (typeof window !== 'undefined') {
+                const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+                return isDarkMode
+            }
+            return false
+        },
+
+        // 应用主题
+        applyTheme(isDark) {
+            this.isDarkMode = isDark
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+        },
+
+        // 设置主题模式
+        setThemeMode(mode) {
+            this.themeMode = mode
+            
+            if (mode === 'system') {
+                const isDark = this.detectSystemTheme()
+                this.applyTheme(isDark)
+            } else {
+                const isDark = mode === 'dark'
+                this.applyTheme(isDark)
+            }
+        },
+
+        // 切换深色模式（保留原有方法以兼容现有代码）
         toggleDarkMode() {
-            this.isDarkMode = !this.isDarkMode
-            // 根据当前的深色模式状态设置 HTML 元素的 data-theme 属性
-            document.documentElement.setAttribute('data-theme', this.isDarkMode ? 'dark' : 'light')
+            if (this.themeMode === 'system') {
+                // 如果当前是系统模式，切换到手动模式
+                this.setThemeMode(this.isDarkMode ? 'light' : 'dark')
+            } else {
+                // 在手动模式间切换
+                this.setThemeMode(this.isDarkMode ? 'light' : 'dark')
+            }
+        },
+
+        // 初始化主题
+        initTheme() {
+            // 应用当前主题
+            if (this.themeMode === 'system') {
+                const isDark = this.detectSystemTheme()
+                this.applyTheme(isDark)
+            } else {
+                const isDark = this.themeMode === 'dark'
+                this.applyTheme(isDark)
+            }
+
+            // 监听系统主题变化（仅在浏览器环境中）
+            if (typeof window !== 'undefined') {
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+                const handleChange = (e) => {
+                    if (this.themeMode === 'system') {
+                        this.applyTheme(e.matches)
+                    }
+                }
+                
+                // 使用新的 addEventListener 方法
+                if (mediaQuery.addEventListener) {
+                    mediaQuery.addEventListener('change', handleChange)
+                } else {
+                    // 兼容旧版浏览器
+                    mediaQuery.addListener(handleChange)
+                }
+            }
         },
 
         // 更新设置

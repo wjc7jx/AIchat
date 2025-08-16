@@ -1,4 +1,5 @@
 @use 'variables.scss';
+@use 'element-theme.scss';
 
 * {
   margin: 0;
@@ -6,12 +7,63 @@
   box-sizing: border-box;
 }
 
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color-primary);
   line-height: 1.6;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// 为主要元素添加平滑过渡效果
+.el-button, 
+.el-input, 
+.el-select, 
+.el-drawer,
+.el-form-item,
+.message-container, 
+.message-text,
+.chat-header,
+.chat-input-container {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+// 深色模式下的图片滤镜，减少刺眼感
+[data-theme="dark"] {
+  img:not([src*=".svg"]):not(.no-filter) {
+    filter: brightness(0.9) contrast(1.1);
+    transition: filter 0.3s ease;
+  }
+  
+  // 头像不应用滤镜
+  .el-avatar img {
+    filter: none;
+  }
+}
+
+// 自定义滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-color);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color);
 }
 
 .fade-enter-active,

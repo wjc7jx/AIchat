@@ -179,12 +179,29 @@ const handleRegenerate = async (message) => {
     padding: 1rem;
     background-color: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+
+    // 深色模式下的头部增强效果
+    [data-theme="dark"] & {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(8px);
+    }
 
     /* 设置聊天头部标题的样式，无默认间距，自定义字体大小和颜色 */
     h1 {
         margin: 0;
         font-size: 1.5rem;
         color: var(--text-color-primary);
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+    
+    .el-button {
+        transition: all 0.2s ease;
+        
+        &:hover {
+            transform: rotate(90deg);
+        }
     }
 }
 
@@ -194,6 +211,12 @@ const handleRegenerate = async (message) => {
     overflow-y: auto;
     padding: 1rem;
     background-color: var(--bg-color-secondary);
+    transition: background-color 0.3s ease;
+    
+    // 深色模式下的消息容器优化
+    [data-theme="dark"] & {
+        background: linear-gradient(180deg, var(--bg-color-secondary) 0%, rgba(26, 26, 26, 0.95) 100%);
+    }
 }
 
 /* 设置空状态时的样式，占据全部高度，居中对齐内容 */

@@ -10,8 +10,18 @@
     <div class="settings-container">
       <!-- 使用element-plus的表单组件来展示和编辑设置 -->
       <el-form :model="settings" label-width="120px">
-        <!-- 深色模式切换 -->
-        <el-form-item label="深色模式">
+        <!-- 主题模式选择 -->
+        <el-form-item label="主题模式">
+          <el-select v-model="settings.themeMode" @change="handleThemeModeChange" class="w-full">
+            <el-option label="跟随系统" value="system" />
+            <el-option label="浅色模式" value="light" />
+            <el-option label="深色模式" value="dark" />
+          </el-select>
+          <div class="form-item-tip">跟随系统会自动适应您的系统主题设置</div>
+        </el-form-item>
+
+        <!-- 深色模式切换（保留以兼容，但在系统模式下禁用） -->
+        <el-form-item label="深色模式" v-if="settings.themeMode !== 'system'">
           <el-switch
             v-model="settings.isDarkMode"
             @change="handleDarkModeChange"
@@ -123,6 +133,7 @@ const visible = computed({
 
 // 设置对象，使用reactive进行响应式处理
 const settings = reactive({
+  themeMode: settingsStore.themeMode,
   isDarkMode: settingsStore.isDarkMode,
   model: settingsStore.model,
   temperature: settingsStore.temperature,
@@ -133,9 +144,17 @@ const settings = reactive({
   topK: settingsStore.topK
 })
 
+// 处理主题模式变化
+const handleThemeModeChange = (value) => {
+  settingsStore.setThemeMode(value)
+  settings.isDarkMode = settingsStore.isDarkMode
+}
+
 // 处理深色模式切换
 const handleDarkModeChange = (value) => {
-  settingsStore.toggleDarkMode()
+  if (settings.themeMode !== 'system') {
+    settingsStore.setThemeMode(value ? 'dark' : 'light')
+  }
 }
 
 // 保存设置

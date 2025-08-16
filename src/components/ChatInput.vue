@@ -253,6 +253,12 @@ const adjustHeight = () => {
   padding: 1rem;
   background-color: var(--bg-color);
   border-top: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  
+  // 深色模式下增强边框效果
+  [data-theme="dark"] & {
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
 // 输入框和按钮组合的样式
@@ -278,6 +284,26 @@ const adjustHeight = () => {
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  
+  .el-button {
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+    }
+    
+    // 深色模式下的按钮增强效果
+    [data-theme="dark"] & {
+      &:hover {
+        box-shadow: 0 4px 8px rgba(92, 174, 253, 0.3);
+      }
+      
+      &.el-button--primary {
+        background: linear-gradient(135deg, var(--primary-color), #409eff);
+        border-color: var(--primary-color);
+      }
+    }
+  }
 }
 
 // Token计数器的样式

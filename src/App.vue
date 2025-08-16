@@ -15,16 +15,21 @@ import { ref, onMounted, watch } from 'vue'
 import { useSettingsStore } from './stores/settings'
 
 const settingsStore = useSettingsStore()
-const isDarkMode = ref(settingsStore.isDarkMode)
 
 // 监听主题变化
-watch(() => settingsStore.isDarkMode, async (newValue) => {
-  document.documentElement.setAttribute('data-theme', newValue ? 'dark' : 'light')
+watch(() => [settingsStore.isDarkMode, settingsStore.themeMode], () => {
+  if (settingsStore.themeMode === 'system') {
+    const isDark = settingsStore.detectSystemTheme()
+    settingsStore.applyTheme(isDark)
+  } else {
+    const isDark = settingsStore.themeMode === 'dark'
+    settingsStore.applyTheme(isDark)
+  }
 }, { immediate: true })
 
 // 在组件挂载时初始化主题
 onMounted(() => {
-  document.documentElement.setAttribute('data-theme', settingsStore.isDarkMode ? 'dark' : 'light')
+  settingsStore.initTheme()
 })
 </script>
 <style lang="scss">
