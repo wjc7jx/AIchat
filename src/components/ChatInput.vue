@@ -5,17 +5,36 @@
     <div class="input-wrapper">
       <!-- 添加文件上传区域 -->
       <div class="upload-area" v-if="showUpload">
+        <div class="upload-tip" v-if="isVLMModel">
+          <el-alert
+            title="图片上传提示"
+            type="info"
+            show-icon
+            :closable="false"
+          >
+            <template #default>
+              <p>当前模型支持图像识别，建议最多上传2张图片</p>
+              <p>支持格式：JPEG、PNG、GIF、WebP</p>
+              <p>图片大小：建议小于10MB</p>
+              <p>细节模式：{{ settingsStore.imageDetail === 'high' ? '高分辨率（消耗更多Token）' : settingsStore.imageDetail === 'low' ? '低分辨率（消耗较少Token）' : '自动选择' }}</p>
+            </template>
+          </el-alert>
+        </div>
+        
         <el-upload
           class="upload-component"
           :action="null"
           :auto-upload="false"
           :on-change="handleFileChange"
           :show-file-list="false"
+          :accept="isVLMModel ? 'image/*' : '*'"
           multiple
         >
         <!-- trigger	触发文件选择框的内容 -->
           <template #trigger>
-            <el-button type="primary" :icon="Plus">添加文件</el-button>
+            <el-button type="primary" :icon="Plus">
+              {{ isVLMModel ? '添加图片' : '添加文件' }}
+            </el-button>
           </template>
         </el-upload>
         
@@ -23,7 +42,7 @@
         <div class="preview-list" v-if="selectedFiles.length">
           <div v-for="(file, index) in selectedFiles" :key="index" class="preview-item">
             <!-- 图片预览 -->
-            <img v-if="isImage(file)" :src="getPreviewUrl(file)" class="preview-image"/>
+            <img v-if="isImage(file)" :src="getPreviewUrl(index)" class="preview-image"/>
             <!-- 文件名预览 -->
             <div v-else class="file-preview">
               <el-icon><Document /></el-icon>
@@ -96,7 +115,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { Delete, Position, Upload, Plus, Document } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
-import { ElMessageBox } from 'element-plus'
+import { useSettingsStore } from '../stores/settings'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import { 
+  buildVLMMessage, 
+  isValidImageFormat, 
+  checkImageSize, 
+  getImagePreviewUrl, 
+  revokeImagePreviewUrl 
+} from '../utils/imageUtils'
 
 // 定义组件的属性
 const props = defineProps({
@@ -109,8 +136,9 @@ const props = defineProps({
 // 定义组件的事件
 const emit = defineEmits(['send', 'clear'])
 
-// 使用聊天存储
+// 使用聊天存储和设置存储
 const chatStore = useChatStore()
+const settingsStore = useSettingsStore()
 // 消息文本的响应式引用
 const messageText = ref('')
 
@@ -121,8 +149,16 @@ Shift + Enter 换行`
 // 计算属性，用于获取聊天存储中的Token计数
 const tokenCount = computed(() => chatStore.tokenCount)
 
+// 计算属性：判断当前模型是否支持图片
+const isVLMModel = computed(() => {
+  return settingsStore.model.includes('VL') || 
+         settingsStore.model.includes('vision') || 
+         settingsStore.model.includes('Qwen2.5-VL')
+})
+
 const showUpload = ref(false)
 const selectedFiles = ref([])
+const previewUrls = ref([])
 
 // 切换上传区域显示
 const toggleUpload = () => {
@@ -131,12 +167,37 @@ const toggleUpload = () => {
 
 // 处理文件选择
 const handleFileChange = (file) => {
+  // 如果是VLM模型，只允许图片文件
+  if (isVLMModel.value && !isValidImageFormat(file.raw)) {
+    ElMessage.error('当前模型只支持图片文件')
+    return
+  }
+  
+  // 检查图片大小
+  if (isValidImageFormat(file.raw) && !checkImageSize(file.raw)) {
+    ElMessage.error('图片文件过大，请选择小于10MB的图片')
+    return
+  }
+  
   selectedFiles.value.push(file.raw)
+  
+  // 为图片创建预览URL
+  if (isImage(file.raw)) {
+    previewUrls.value.push(getImagePreviewUrl(file.raw))
+  } else {
+    previewUrls.value.push(null)
+  }
 }
 
 // 移除文件
 const removeFile = (index) => {
+  // 释放预览URL内存
+  if (previewUrls.value[index]) {
+    revokeImagePreviewUrl(previewUrls.value[index])
+  }
+  
   selectedFiles.value.splice(index, 1)
+  previewUrls.value.splice(index, 1)
 }
 
 // 判断是否为图片文件
@@ -144,9 +205,9 @@ const isImage = (file) => {
   return file.type.startsWith('image/')
 }
 
-// 获取预览URL
-const getPreviewUrl = (file) => {
-  return URL.createObjectURL(file)
+// 获取预览URL（使用缓存的URL）
+const getPreviewUrl = (index) => {
+  return previewUrls.value[index] || getImagePreviewUrl(selectedFiles.value[index])
 }
 
 // 修改发送处理函数
@@ -154,34 +215,66 @@ const handleSend = async () => {
   if ((!messageText.value.trim() && selectedFiles.value.length === 0) || props.loading) return
   
   try {
-    // 处理文件上传
-    const fileContents = await Promise.all(
-      selectedFiles.value.map(async (file) => {
-        if (isImage(file)) {
-          return await convertImageToBase64(file)
-        } else {
-          return await readFileContent(file)
-        }
-      })
-    )
+    let messageContent
+    
+    // 如果是VLM模型且有图片文件，使用VLM消息格式
+    if (isVLMModel.value && selectedFiles.value.some(file => isImage(file))) {
+      const imageFiles = selectedFiles.value.filter(file => isImage(file))
+      const textFiles = selectedFiles.value.filter(file => !isImage(file))
+      
+      // 处理文本文件内容
+      let textContent = messageText.value
+      if (textFiles.length > 0) {
+        const fileContents = await Promise.all(
+          textFiles.map(file => readFileContent(file))
+        )
+        textContent = textContent + '\n' + fileContents.join('\n')
+      }
+      
+      // 构建VLM消息
+      messageContent = await buildVLMMessage(
+        textContent, 
+        imageFiles, 
+        settingsStore.imageDetail
+      )
+    } else {
+      // 传统文本模式
+      const fileContents = await Promise.all(
+        selectedFiles.value.map(async (file) => {
+          if (isImage(file)) {
+            return await convertImageToBase64(file)
+          } else {
+            return await readFileContent(file)
+          }
+        })
+      )
 
-    // 组合消息内容
-    let content = messageText.value
-    if (fileContents.length > 0) {
-      content = content + '\n' + fileContents.join('\n')
+      let content = messageText.value
+      if (fileContents.length > 0) {
+        content = content + '\n' + fileContents.join('\n')
+      }
+      
+      messageContent = content
     }
 
-    emit('send', content)
+    emit('send', messageContent)
+    
+    // 清理状态
     messageText.value = ''
+    // 释放所有预览URL
+    previewUrls.value.forEach(url => {
+      if (url) revokeImagePreviewUrl(url)
+    })
     selectedFiles.value = []
+    previewUrls.value = []
     showUpload.value = false
   } catch (error) {
     console.error('发送失败:', error)
-    ElMessage.error('发送失败，请重试')
+    ElMessage.error(error.message || '发送失败，请重试')
   }
 }
 
-// 将图片转换为base64
+// 将图片转换为base64（兼容旧版本）
 const convertImageToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -318,6 +411,17 @@ const adjustHeight = () => {
   padding: 1rem;
   border: 2px dashed var(--border-color);
   border-radius: var(--border-radius);
+  
+  .upload-tip {
+    margin-bottom: 1rem;
+    
+    :deep(.el-alert__content) {
+      p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+      }
+    }
+  }
   
   .preview-list {
     display: flex;

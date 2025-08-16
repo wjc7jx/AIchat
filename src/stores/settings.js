@@ -23,6 +23,8 @@ export const useSettingsStore = defineStore('settings', {
         topP: 0.7,
         // Top K 参数
         topK: 50,
+        // 图片细节控制参数：'low', 'high', 'auto'
+        imageDetail: 'high',
     }),
 
     // 定义 store 的动作
@@ -127,4 +129,6 @@ export const modelOptions = [
     { label: 'Meta-Llama-3.1-8B', value: 'meta-llama/Meta-Llama-3.1-8B-Instruct' },
     // { label: 'Gemma-2-9B', value: 'google/gemma-2-9b-it' },  //不知道为什么用不了
     { label: 'DeepSeek-V2.5', value: 'deepseek-ai/DeepSeek-V2.5' },
+    // VLM 模型
+    { label: 'Qwen2.5-VL-7B (支持图像)', value: 'Pro/Qwen/Qwen2.5-VL-7B-Instruct', isVLM: true },
 ]

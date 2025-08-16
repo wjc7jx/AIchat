@@ -20,23 +20,12 @@ export const chatApi = {
             temperature: settingsStore.temperature,
             max_tokens: settingsStore.maxTokens,
             stream,
-            top_p: 0.7,
-            top_k: 50,
-            frequency_penalty: 0.5,
-            n: 1,
-            response_format: {
-                type: "text"
-            },
-            tools: [{
-                type: "function",
-                function: {
-                    description: "<string>",
-                    name: "<string>",
-                    parameters: {},
-                    strict: true
-                }
-            }]
+            top_p: settingsStore.topP,
+            top_k: settingsStore.topK,
         }
+
+        // 移除不必要的参数，避免API错误
+        // frequency_penalty, n, response_format, tools 这些参数可能不是所有模型都支持
 
         const response = await fetch(`${API_BASE_URL}/chat/completions`, {
             method: 'POST',
@@ -48,7 +37,8 @@ export const chatApi = {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            const errorData = await response.json().catch(() => null)
+            throw new Error(errorData?.error?.message || `HTTP error! status: ${response.status}`)
         }
 
         if (stream) {

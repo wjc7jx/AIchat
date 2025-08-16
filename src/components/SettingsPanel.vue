@@ -99,6 +99,16 @@
             :step="1"
           />
         </el-form-item>
+
+        <!-- 图片细节控制（仅VLM模型显示） -->
+        <el-form-item label="图片细节" v-if="isVLMModel">
+          <el-select v-model="settings.imageDetail" class="w-full">
+            <el-option label="高分辨率 (high)" value="high" />
+            <el-option label="低分辨率 (low)" value="low" />
+            <el-option label="自动 (auto)" value="auto" />
+          </el-select>
+          <div class="form-item-tip">控制对图像的预处理方式，影响Token消耗</div>
+        </el-form-item>
       </el-form>
 
       <!-- 保存设置按钮 -->
@@ -141,7 +151,14 @@ const settings = reactive({
   apiKey: settingsStore.apiKey,
   streamResponse: settingsStore.streamResponse,
   topP: settingsStore.topP,
-  topK: settingsStore.topK
+  topK: settingsStore.topK,
+  imageDetail: settingsStore.imageDetail
+})
+
+// 计算属性：判断当前模型是否为VLM模型
+const isVLMModel = computed(() => {
+  const currentModel = modelOptions.find(option => option.value === settings.model)
+  return currentModel?.isVLM || false
 })
 
 // 处理主题模式变化

@@ -59,10 +59,10 @@ watch(messages, () => {
 
 /**
  * 发送消息处理函数
- * @param {string} content 用户输入的消息内容
+ * @param {string|Object} content 用户输入的消息内容，可能是字符串或VLM格式对象
  */
 const handleSend = async (content) => {
-    console.log('发送消息',content)
+    console.log('发送消息', content)
 
     // if (isLoading.value) return
     // 添加用户消息和助理的空消息
@@ -73,11 +73,65 @@ const handleSend = async (content) => {
     try {
         // 获取设置并发送消息
         const settingsStore = useSettingsStore()
+        
+        // 构建消息数组，处理VLM格式
+        const messagesToSend = []
+        
+        // 处理历史消息
+        for (let i = 0; i < messages.value.length - 1; i++) {
+            const msg = messages.value[i]
+            if (msg.role === 'user' && typeof msg.content === 'object' && msg.content.text !== undefined) {
+                // 这是一个VLM格式的消息，需要重构为API格式
+                const apiMessage = {
+                    role: 'user',
+                    content: []
+                }
+                
+                // 添加图片
+                if (msg.content.images && msg.content.images.length > 0) {
+                    msg.content.images.forEach(imageUrl => {
+                        apiMessage.content.push({
+                            type: 'image_url',
+                            image_url: {
+                                url: imageUrl,
+                                detail: settingsStore.imageDetail
+                            }
+                        })
+                    })
+                }
+                
+                // 添加文本
+                if (msg.content.text) {
+                    apiMessage.content.push({
+                        type: 'text',
+                        text: msg.content.text
+                    })
+                }
+                
+                messagesToSend.push(apiMessage)
+            } else {
+                // 传统格式消息
+                messagesToSend.push({
+                    role: msg.role,
+                    content: msg.content
+                })
+            }
+        }
+        
+        // 添加当前用户消息
+        if (typeof content === 'object' && content.role === 'user') {
+            messagesToSend.push(content)
+        } else {
+            messagesToSend.push({
+                role: 'user',
+                content: content
+            })
+        }
+        
+        console.log('发送给API的消息:', messagesToSend)
+        
         const response = await chatApi.sendMessage(
-            messages.value.slice(0, -1).map(m => ({
-                role: m.role,
-                content: m.content
-            })),
+            messagesToSend,
             settingsStore.streamResponse
         )
 

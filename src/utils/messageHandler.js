@@ -1,11 +1,36 @@
 export const messageHandler = {
     formatMessage(role, content) {
-        const hasImage = content.includes('![') && content.includes('](data:image/')
+        // 检查是否是VLM格式的消息（包含图片）
+        let hasImage = false
+        let displayContent = content
+        
+        // 如果content是对象（VLM格式）
+        if (typeof content === 'object' && content.content) {
+            // 检查是否包含图片
+            hasImage = content.content.some(item => item.type === 'image_url')
+            
+            // 提取文本内容用于显示
+            const textItems = content.content.filter(item => item.type === 'text')
+            displayContent = textItems.map(item => item.text).join('\n')
+            
+            // 为了在界面显示图片，我们需要重构显示逻辑
+            const imageItems = content.content.filter(item => item.type === 'image_url')
+            if (imageItems.length > 0) {
+                displayContent = {
+                    text: displayContent,
+                    images: imageItems.map(item => item.image_url.url)
+                }
+            }
+        } else if (typeof content === 'string') {
+            // 检查传统的markdown图片格式
+            hasImage = content.includes('![') && content.includes('](data:image/')
+            displayContent = content
+        }
         
         return {
             id: Date.now(),
             role,
-            content,
+            content: displayContent,
             hasImage,
             loading: false,
         };

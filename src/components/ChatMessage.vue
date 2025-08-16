@@ -18,8 +18,23 @@
     <div class="message-content">
       <!-- 显示模式 -->
       <div class="message-text" v-if="!loading && !isEditing">
-        <!-- 使用 v-html 渲染 Markdown 内容 -->
-        <div class="markdown-body" v-html="renderedContent" ref="markdownBody" @click="handleCodeBlockClick"></div>
+        <!-- VLM 格式消息：包含图片和文本 -->
+        <div v-if="isVLMMessage" class="vlm-message">
+          <!-- 显示图片 -->
+          <div class="message-images" v-if="messageImages.length > 0">
+            <img 
+              v-for="(imageUrl, index) in messageImages" 
+              :key="index"
+              :src="imageUrl" 
+              class="message-image"
+              @click="previewImage(imageUrl)"
+            />
+          </div>
+          <!-- 显示文本 -->
+          <div class="markdown-body" v-if="messageText" v-html="renderedContent" ref="markdownBody" @click="handleCodeBlockClick"></div>
+        </div>
+        <!-- 传统格式消息 -->
+        <div v-else class="markdown-body" v-html="renderedContent" ref="markdownBody" @click="handleCodeBlockClick"></div>
       </div>
 
       <!-- 编辑模式 -->
@@ -117,7 +132,8 @@ const isLoading = computed(() => chatStore.isLoading)
 
 // 开始编辑
 const startEdit = async () => {
-  editContent.value = props.message.content
+  // 对于VLM格式的消息，只编辑文本部分
+  editContent.value = isVLMMessage.value ? messageText.value : props.message.content
   isEditing.value = true
   // 等待 DOM 更新后聚焦输入框
   await nextTick()
@@ -136,9 +152,21 @@ const saveEdit = () => {
     ElMessage.warning('消息内容不能为空')
     return
   }
+  
+  // 对于VLM格式的消息，更新文本部分
+  let updatedContent
+  if (isVLMMessage.value) {
+    updatedContent = {
+      ...props.message.content,
+      text: editContent.value.trim()
+    }
+  } else {
+    updatedContent = editContent.value.trim()
+  }
+  
   emit('update', {
     ...props.message,
-    content: editContent.value.trim()
+    content: updatedContent
   })
   isEditing.value = false
 }
@@ -166,10 +194,46 @@ const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString()
 }
 
+// 计算属性：判断是否为VLM格式消息
+const isVLMMessage = computed(() => {
+  return typeof props.message.content === 'object' && props.message.content.images
+})
+
+// 计算属性：获取消息中的图片
+const messageImages = computed(() => {
+  if (isVLMMessage.value) {
+    return props.message.content.images || []
+  }
+  return []
+})
+
+// 计算属性：获取消息文本
+const messageText = computed(() => {
+  if (isVLMMessage.value) {
+    return props.message.content.text || ''
+  }
+  return props.message.content
+})
+
 // 计算属性：渲染 Markdown 内容
 const renderedContent = computed(() => {
-  return renderMarkdown(props.message.content)
+  const textContent = isVLMMessage.value ? messageText.value : props.message.content
+  return renderMarkdown(textContent)
 })
+
+// 图片预览功能
+const previewImage = (imageUrl) => {
+  // 创建一个新的窗口来预览图片
+  const newWindow = window.open('', '_blank')
+  newWindow.document.write(`
+    <html>
+      <head><title>图片预览</title></head>
+      <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
+        <img src="${imageUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+      </body>
+    </html>
+  `)
+}
 
 // 复制文本到剪贴板
 const copyToClipboard = async (text) => {
@@ -421,6 +485,29 @@ const handleCopyAll = async () => {
   // 深色模式下增强阴影效果
   [data-theme="dark"] & {
     border: 1px solid var(--border-color);
+  }
+}
+
+// VLM 消息样式
+.vlm-message {
+  .message-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    
+    .message-image {
+      max-width: 200px;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
   }
 }
 
