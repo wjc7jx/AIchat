@@ -21,12 +21,12 @@
         </el-form-item>
 
         <!-- 深色模式切换（保留以兼容，但在系统模式下禁用） -->
-        <el-form-item label="深色模式" v-if="settings.themeMode !== 'system'">
+        <!-- <el-form-item label="深色模式" v-if="settings.themeMode !== 'system'">
           <el-switch
             v-model="settings.isDarkMode"
             @change="handleDarkModeChange"
           />
-        </el-form-item>
+        </el-form-item> -->
 
         <!-- 模型选择 -->
         <el-form-item label="模型">

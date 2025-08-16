@@ -220,9 +220,9 @@ const handleCopyAll = async () => {
 <style lang="scss" scoped>
 .message-container {
   display: flex;
-  margin: 1rem 0;
-  padding: 0.5rem;
-  gap: 1rem;
+  margin: 0.5rem 0;
+  padding: 0.3rem;
+  gap: 0.8rem;
   transition: all 0.3s ease;
   
   // 用户消息样式
@@ -257,13 +257,13 @@ const handleCopyAll = async () => {
     :deep() {
       // Markdown 内容样式
       h1, h2, h3, h4, h5, h6 {
-        margin: 0.5rem 0;
+        margin: 0.3rem 0;
         font-weight: 600;
         line-height: 1.25;
       }
 
       p {
-        margin: 0.25rem 0;
+        margin: 0.15rem 0;
       }
 
       code {
@@ -284,7 +284,7 @@ const handleCopyAll = async () => {
         line-height: 1.45;
         background-color: var(--code-block-bg);
         border-radius: var(--border-radius);
-        margin: 0.5rem 0;
+        margin: 0.3rem 0;
         border: 1px solid var(--border-color);
         
         // 代码头部样式
@@ -336,21 +336,21 @@ const handleCopyAll = async () => {
       }
 
       blockquote {
-        margin: 0.25rem 0;
+        margin: 0.15rem 0;
         padding: 0 0.75rem;
         color: var(--text-color-secondary);
         border-left: 0.25rem solid var(--border-color);
       }
 
       ul, ol {
-        margin: 0.25rem 0;
+        margin: 0.15rem 0;
         padding-left: 1.5rem;
       }
 
       table {
         border-collapse: collapse;
         width: 100%;
-        margin: 0.25rem 0;
+        margin: 0.15rem 0;
 
         th, td {
           padding: 0.5rem;
@@ -366,7 +366,7 @@ const handleCopyAll = async () => {
         max-width: 100%;
         max-height: 300px;
         object-fit: contain;
-        margin: 0.5rem 0;
+        margin: 0.3rem 0;
         border-radius: var(--border-radius);
         cursor: pointer;
         
@@ -412,7 +412,7 @@ const handleCopyAll = async () => {
 
 .message-text {
   background-color: var(--bg-color);
-  padding: 1rem;
+  padding: 0.8rem;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   white-space: pre-wrap;
